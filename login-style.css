@@ -1,0 +1,318 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.login-wrapper {
+    animation: entranceEffect 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    opacity: 0;
+    width: 100%;
+    max-width: 460px;
+    position: relative;
+    z-index: 10;
+}
+
+@keyframes entranceEffect {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0px);
+    }
+}
+
+.login-card {
+    background: #c6deff;
+    padding: 50px 40px;
+    border-radius: 28px;
+    box-shadow: 0 20px 50px -15px rgba(15, 23, 42, 0.15);
+    width: 100%;
+}
+
+.brand-logo-area {
+    margin-bottom: 40px;
+    text-align: center;
+    user-select: none;
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.logo-tara {
+    font-size: 72px;
+    font-weight: 800;
+    color: #82b444;
+    letter-spacing: -3px;
+    line-height: 1;
+}
+
+.logo-erp {
+    font-size: 22px;
+    font-weight: 700;
+    color: #007cc3;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.radio-selector-group {
+    display: flex;
+    gap: 28px;
+    margin-bottom: 5px;
+    justify-content: flex-start;
+    padding-left: 2px;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+}
+
+.radio-option input {
+    position: absolute;
+    opacity: 0;
+}
+
+.custom-radio {
+    width: 20px;
+    height: 20px;
+    background-color: #ffffff;
+    border: 2px solid #a1bce6;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+    transition: all 0.25s ease;
+}
+
+.radio-option input:checked~.custom-radio {
+    border-color: #007cc3;
+}
+
+.custom-radio::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #007cc3;
+    transform: translate(-50%, -50%) scale(0);
+    transition: transform 0.2s ease;
+}
+
+.radio-option input:checked~.custom-radio::after {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.radio-label-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #475569;
+    transition: color 0.2s ease;
+}
+
+.radio-option input:checked~.radio-label-text {
+    color: #0f172a;
+}
+
+.input-floating-group {
+    position: relative;
+    width: 100%;
+}
+
+.input-floating-group input {
+    width: 100%;
+    padding: 18px 16px 18px 52px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+    background-color: #ffffff;
+    border: 1px solid #ffffff;
+    border-radius: 16px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.input-floating-group label {
+    position: absolute;
+    left: 52px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 15px;
+    font-weight: 500;
+    color: #94a3b8;
+    pointer-events: none;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.required-star {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+.input-icon-left {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    color: #94a3b8;
+    transition: color 0.3s ease;
+}
+
+.focus-border-line {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background-color: #007cc3;
+    transition: all 0.3s ease;
+}
+
+.input-floating-group input:focus {
+    border-color: #007cc3;
+}
+
+.input-floating-group input:focus~label,
+.input-floating-group input:not(:placeholder-shown)~label {
+    top: 0;
+    left: 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #007cc3;
+    background-color: #c6deff;
+    padding: 0 6px;
+    transform: translateY(-50%);
+}
+
+.input-floating-group input:focus~.input-icon-left,
+.input-floating-group input:not(:placeholder-shown)~.input-icon-left {
+    color: #007cc3;
+}
+
+.input-floating-group input:focus~.focus-border-line {
+    width: 100%;
+    left: 0;
+}
+
+.prime-login-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #008be0, #00609c);
+    color: #ffffff;
+    border: none;
+    padding: 16px;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 24px rgba(0, 124, 195, 0.25);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    margin-top: 5px;
+}
+
+.prime-login-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: all 0.6s ease;
+}
+
+.prime-login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px rgba(0, 124, 195, 0.35);
+}
+
+.prime-login-btn:hover::before {
+    left: 100%;
+    transition: all 0.6s ease;
+}
+
+.prime-login-btn:hover i {
+    transform: translateX(4px);
+}
+
+.error-toast-right {
+    position: fixed;
+    right: -400px;
+    top: 40px;
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 18px 24px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.12);
+    width: 340px;
+    z-index: 999;
+    transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast-active {
+    right: 40px !important;
+}
+
+.input-field-error input {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12) !important;
+}
+
+.input-field-error .input-icon-left i,
+.input-field-error label {
+    color: #ef4444 !important;
+}
+
+@keyframes shakeAnimation {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-6px);
+    }
+    75% {
+        transform: translateX(6px);
+    }
+}
+
+.shake-anim {
+    animation: shakeAnimation 0.3s ease-in-out;
+}

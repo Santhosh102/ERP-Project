@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Systems Portal</title>
+    <!-- Unga external CSS file link -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Icon packages link -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="hub-container">
+        <header class="hub-header">
+            <div class="user-profile-widget">
+                <div class="profile-avatar-circle">
+                    <!-- Target dynamic selector element for profile picture -->
+                    <img id="userAvatar" src="" alt="Profile">
+                </div>
+                <div class="user-info-text">
+                    <!-- 🔥 CRITICAL BINDINGS: Core ID fields to overwrite static SUGA text -->
+                    <span class="user-badge-code" id="userCode">...</span>
+                    <span class="user-display-name" id="userName">Loading Profile...</span>
+                    <p class="user-dept-label" id="userDept">Please wait...</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="title-action-row">
+            <h2 class="modules-section-title">TARA ERP Dashboard Modules</h2>
+            <button class="tara-erp-btn" onclick="window.location.href='https://cloud.taraerp.com/ords/f?p=100:1:0::::P_TOKEN:TOKEN_VAL'">Go to TARA ERP</button>
+        </div>
+
+        <div class="card-grid">
+            <div class="square-card sales-card" onclick="window.location.href='sales.html'">
+                <div class="image-wrapper sales-bg"><i class="ri-bar-chart-2-fill"></i></div>
+                <span>Sales</span>
+            </div>
+            <div class="square-card purchase-card" onclick="window.location.href='purchase.html'">
+                <div class="image-wrapper purchase-bg"><i class="ri-shopping-cart-2-fill"></i></div>
+                <span>Purchase</span>
+            </div>
+            <div class="square-card inventory-card" onclick="window.location.href='inventory.html'">
+                <div class="image-wrapper inventory-bg"><i class="ri-box-3-fill"></i></div>
+                <span>Inventory</span>
+            </div>
+            <div class="square-card qc-card" onclick="window.location.href='qc.html'">
+                <div class="image-wrapper qc-bg"><i class="ri-shield-check-fill"></i></div>
+                <span>QC</span>
+            </div>
+            <div class="square-card subcontract-card" onclick="window.location.href='subcontract.html'">
+                <div class="image-wrapper subcontract-bg"><i class="ri-hand-heart-fill"></i></div>
+                <span>Subcontract</span>
+            </div>
+            <div class="square-card production-card" onclick="window.location.href='production.html'">
+                <div class="image-wrapper production-bg"><i class="ri-settings-5-fill"></i></div>
+                <span>Production</span>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const currentOrgId = localStorage.getItem('stored_org_id') || '1004';
+            const currentLoginUser = localStorage.getItem('stored_login_name') || 'santhosh';
+
+            const baseORDSUrl = 'https://cloud.taraerp.com/ords/taralive/auth/';
+            const apexProfileUrl = baseORDSUrl + 'user/profile?p_username=' + encodeURIComponent(currentLoginUser) + '&p_orgid=' + encodeURIComponent(currentOrgId);
+
+            const systemDefaultAvatar = "https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.2.0/img/avatar5.png";
+
+            fetch(apexProfileUrl, {
+                    method: 'GET'
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('ORDS API execution anomaly.');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.items && data.items.length > 0) {
+                        const profileData = data.items[0];
+
+                        const codeEl = document.getElementById('userCode') || document.querySelector('.user-badge-code');
+                        const nameEl = document.getElementById('userName') || document.querySelector('.user-display-name');
+                        const deptEl = document.getElementById('userDept') || document.querySelector('.user-dept-label');
+                        const imgEl = document.getElementById('userAvatar') || document.querySelector('.profile-avatar-circle img');
+
+                        if (codeEl) codeEl.innerText = profileData.user_code;
+                        if (nameEl) nameEl.innerText = profileData.username;
+                        if (deptEl) deptEl.innerText = profileData.department;
+
+                        if (imgEl) {
+
+                            if (profileData.avatar_url && !profileData.avatar_url.includes('emp_id=')) {
+                                imgEl.src = baseORDSUrl + profileData.avatar_url;
+                            } else {
+                                imgEl.src = systemDefaultAvatar;
+                            }
+
+                            imgEl.onerror = function() {
+                                this.src = systemDefaultAvatar;
+                            };
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error("DOM safe execution log trace exception:", err);
+                });
+        });
+    </script>
+</body>
+
+</html>

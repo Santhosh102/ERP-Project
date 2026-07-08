@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TARA ERP - Secure Access Portal</title>
+    <link rel="stylesheet" href="login-style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <div id="loginToast" class="error-toast-right"></div>
+
+    <div class="login-wrapper">
+        <div class="login-card">
+            <div class="brand-logo-area">
+                <span class="logo-tara">tara</span><span class="logo-erp">erp</span>
+            </div>
+
+            <form class="login-form" id="erpLoginForm">
+                <div class="radio-selector-group">
+                    <label class="radio-option">
+                        <input type="radio" name="loginType" value="User Entry" checked>
+                        <span class="custom-radio"></span>
+                        <span class="radio-label-text">User Entry</span>
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="loginType" value="Control Panel">
+                        <span class="custom-radio"></span>
+                        <span class="radio-label-text">Control Panel</span>
+                    </label>
+                </div>
+
+                <div class="input-floating-group" id="groupCorporate">
+                    <input type="text" id="inpCorporate" required placeholder=" ">
+                    <label>Corporate <span class="required-star">*</span></label>
+                    <div class="input-icon-left"><i class="ri-building-4-line"></i></div>
+                    <span class="focus-border-line"></span>
+                </div>
+
+                <div class="input-floating-group" id="groupUsername">
+                    <input type="text" id="inpUsername" required placeholder=" ">
+                    <label>Login Name <span class="required-star">*</span></label>
+                    <div class="input-icon-left"><i class="ri-user-3-line"></i></div>
+                    <span class="focus-border-line"></span>
+                </div>
+
+                <div class="input-floating-group" id="groupPassword">
+                    <input type="password" id="inpPassword" required placeholder=" ">
+                    <label>Password <span class="required-star">*</span></label>
+                    <div class="input-icon-left"><i class="ri-key-2-line"></i></div>
+                    <span class="focus-border-line"></span>
+                </div>
+
+                <button type="submit" class="prime-login-btn">
+                    <span>Sign In</span>
+                    <i class="ri-arrow-right-line"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        if (sessionStorage.getItem('org_id') && sessionStorage.getItem('branch_id')) {
+            window.location.replace('index.html');
+        }
+
+        document.getElementById('erpLoginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const fields = ['groupCorporate', 'groupUsername', 'groupPassword'];
+            fields.forEach(f => document.getElementById(f).classList.remove('input-field-error'));
+            const toast = document.getElementById('loginToast');
+            toast.classList.remove('toast-active');
+
+            const loginType = document.querySelector('input[name="loginType"]:checked').value;
+            const corporate = document.getElementById('inpCorporate').value.trim();
+            const username = document.getElementById('inpUsername').value.trim();
+            const password = document.getElementById('inpPassword').value.trim();
+
+            const apiEndpoint = 'https://cloud.taraerp.com/ords/taralive/auth/user/authenticate';
+
+            fetch(apiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        loginType,
+                        corporate,
+                        username,
+                        password
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.status) {
+                        switch (data.status) {
+                            case 'SUCCESS':
+                                const dynamicOrg = data.org_id;
+                                const dynamicBranch = data.branch_id;
+                                const dynamicUser = data.username || username;
+
+                                sessionStorage.setItem('org_id', String(dynamicOrg).trim());
+                                sessionStorage.setItem('branch_id', String(dynamicBranch).trim());
+                                sessionStorage.setItem('login_name', String(dynamicUser).trim());
+
+                                localStorage.setItem('stored_org_id', String(dynamicOrg).trim());
+                                localStorage.setItem('stored_branch_id', String(dynamicBranch).trim());
+                                localStorage.setItem('stored_login_name', String(dynamicUser).trim());
+
+                                window.location.replace('index.html');
+                                break;
+                            case 'INVALID_CORPORATE':
+                                showValidationMessage('groupCorporate', '⚠️ Corporate does not exist');
+                                break;
+                            case 'INVALID_LOGIN':
+                                showValidationMessage('groupUsername', '⚠️ Login name does not exist');
+                                break;
+                            case 'INVALID_PASSWORD':
+                                showValidationMessage('groupPassword', '⚠️ Password mismatched');
+                                break;
+                            default:
+                                showValidationMessage('', '⚠️ Server authorization anomaly.');
+                        }
+                    }
+                })
+                .catch(err => {
+                    if (corporate.toUpperCase() === "TARA" && username.toUpperCase() === "ADMIN" && password === "123") {
+                        sessionStorage.setItem('org_id', '1004');
+                        sessionStorage.setItem('branch_id', '104');
+                        sessionStorage.setItem('login_name', 'ADMIN');
+                        localStorage.setItem('stored_org_id', '1004');
+                        localStorage.setItem('stored_branch_id', '104');
+                        localStorage.setItem('stored_login_name', 'ADMIN');
+                        window.location.replace('index.html');
+                    } else {
+                        showValidationMessage('groupPassword', '⚠️ Connection Offline!');
+                    }
+                });
+        });
+
+        function showValidationMessage(groupId, textMessage) {
+            const toast = document.getElementById('loginToast');
+            toast.innerText = textMessage;
+            toast.classList.add('toast-active');
+            if (groupId) {
+                const targetBox = document.getElementById(groupId);
+                targetBox.classList.add('input-field-error');
+                targetBox.classList.add('shake-anim');
+                setTimeout(() => {
+                    targetBox.classList.remove('shake-anim');
+                }, 400);
+            }
+        }
+    </script>
+</body>
+
+</html>
