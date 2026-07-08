@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Dashboard</title>
+    <link rel="stylesheet" href="inventory.css">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+</head>
+
+<body>
+
+    <header class="global-secure-header">
+        <div class="brand-logo-area tara-logo-animate" id="btnHeaderLogoRedirect">
+            <i class="ri-instance-line logo-icon"></i>
+            <span class="logo-tara">Tara<span class="logo-erp">ERP</span></span>
+        </div>
+        <div class="user-profile-badge">
+            <span id="lblDisplayUsername">Loading...</span>
+            <button class="btn-universal-logout" id="btnCoreLogout">
+                <i class="ri-logout-box-r-line"></i>
+                <span>Logout</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <div class="dashboard-action-row">
+            <h2>Inventory Dashboard</h2>
+            <button class="btn-reset-control" id="btnResetDashboard"><i class="ri-refresh-line"></i> Reset</button>
+        </div>
+
+        <main class="dashboard-core-viewport">
+
+            <div class="forced-inventory-row-container">
+                <div class="forced-inventory-kpi-row">
+                    <div class="metric-compact-card animate-card" style="--card-delay: 1;">
+                        <div class="card-title-banner">No of GRNs cleared MTD</div>
+                        <div class="card-number-frame" id="valCard_0">0</div>
+                        <div class="card-bottom-stripe green-bright"></div>
+                    </div>
+                    <div class="metric-compact-card animate-card" style="--card-delay: 2;">
+                        <div class="card-title-banner">No of GRNs pending</div>
+                        <div class="card-number-frame" id="valCard_1">0</div>
+                        <div class="card-bottom-stripe green-dark"></div>
+                    </div>
+                    <div class="metric-compact-card animate-card" style="--card-delay: 3;">
+                        <div class="card-title-banner">No of GRNs cleared YTD</div>
+                        <div class="card-number-frame" id="valCard_2">0</div>
+                        <div class="card-bottom-stripe teal-medium"></div>
+                    </div>
+                    <div class="metric-compact-card animate-card" style="--card-delay: 4;">
+                        <div class="card-title-banner">Total Inventory Value</div>
+                        <div class="card-number-frame" id="valCard_3">0.00</div>
+                        <div class="card-bottom-stripe teal-dark"></div>
+                    </div>
+                    <div class="metric-compact-card animate-card" style="--card-delay: 5;">
+                        <div class="card-title-banner">3 MTD Non Moving Value</div>
+                        <div class="card-number-frame" id="valCard_4">0.00</div>
+                        <div class="card-bottom-stripe orange-bright"></div>
+                    </div>
+                    <div class="metric-compact-card animate-card" style="--card-delay: 6;">
+                        <div class="card-title-banner">1 Year Non Moving Value</div>
+                        <div class="card-number-frame" id="valCard_5">0.00</div>
+                        <div class="card-bottom-stripe orange-dark"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-three-column-row structured-row-height margin-top-box animate-section" style="--section-delay: 1;">
+                <div class="dashboard-section-block chart-wrapper-container split-three">
+                    <h3>Monthly GRN Trend</h3>
+                    <div class="chart-canvas-frame"><canvas id="grnOnlyBarChart"></canvas></div>
+                </div>
+                <div class="dashboard-section-block chart-wrapper-container split-three">
+                    <h3>Monthly Issue Trend</h3>
+                    <div class="chart-canvas-frame"><canvas id="issueOnlyBarChart"></canvas></div>
+                </div>
+                <div class="dashboard-section-block chart-wrapper-container split-three">
+                    <h3>Ageing Stock Values</h3>
+                    <div class="chart-canvas-frame"><canvas id="ageingStockPieChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="charts-three-column-row structured-row-height margin-top-box animate-section" style="--section-delay: 2;">
+                <div class="dashboard-section-block chart-wrapper-container split-three">
+                    <h3>Monthly Trend of Stock Value</h3>
+                    <div class="chart-canvas-frame"><canvas id="stockTrendValueLineChart"></canvas></div>
+                </div>
+                <div class="dashboard-section-block chart-wrapper-container split-three">
+                    <h3>Inventory vs Reorder Level</h3>
+                    <div class="chart-canvas-frame"><canvas id="reorderLevelComparisonBarChart"></canvas></div>
+                </div>
+                <div class="dashboard-section-block chart-wrapper-container split-three target-card-ui">
+                    <div class="widget-header-row">
+                        <h3>Stock to Sales Ratio</h3>
+                        <i class="ri-menu-line widget-menu-trigger"></i>
+                    </div>
+                    <div class="gauge-layout-box">
+                        <div class="chart-canvas-frame">
+                            <canvas id="targetSpeedometerGauge"></canvas>
+                        </div>
+                        <div class="gauge-center-value" id="gaugeLiveValueText">856.14</div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            Chart.register(ChartDataLabels);
+
+            const logoBtn = document.getElementById('btnHeaderLogoRedirect');
+            if (logoBtn) {
+                logoBtn.addEventListener('click', function() {
+                    this.classList.add('logo-clicked-active');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 180);
+                });
+            }
+
+            const activeOrgId = sessionStorage.getItem('org_id') || localStorage.getItem('stored_org_id') || '1004';
+            const activeBranchId = sessionStorage.getItem('branch_id') || localStorage.getItem('stored_branch_id') || '104';
+            const activeUsername = sessionStorage.getItem('login_name') || localStorage.getItem('stored_login_name') || 'INTEGREATZ USER';
+
+            document.getElementById('lblDisplayUsername').innerText = String(activeUsername).toUpperCase();
+
+            const queryParams = '?p_orgid=' + encodeURIComponent(activeOrgId.trim()) +
+                '&p_branchid=' + encodeURIComponent(activeBranchId.trim()) +
+                '&_ncBust=' + new Date().getTime();
+
+            const coreMicroserviceServerUrl = 'https://cloud.taraerp.com/ords/taralive/tara_live/';
+
+            let grnOnlyBarChartRef = null;
+            let issueOnlyBarChartRef = null;
+            let stockTrendValueLineChartRef = null;
+            let ageingStockPieChartRef = null;
+            let reorderLevelComparisonBarChartRef = null;
+            let targetSpeedometerGaugeInstance = null;
+
+            const staticMonths = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR'];
+
+            const isolatedAxisLineConfig = {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    border: {
+                        display: true,
+                        color: '#94a3b8',
+                        width: 1.5
+                    },
+                    ticks: {
+                        color: '#64748b',
+                        font: {
+                            family: 'Inter',
+                            size: 9,
+                            weight: '600'
+                        }
+                    }
+                },
+                y: {
+                    grid: {
+                        display: false
+                    },
+                    border: {
+                        display: true,
+                        color: '#94a3b8',
+                        width: 1.5
+                    },
+                    ticks: {
+                        display: true,
+                        color: '#64748b',
+                        font: {
+                            family: 'Inter',
+                            size: 9,
+                            weight: '500'
+                        },
+                        callback: function(value) {
+                            return value.toLocaleString('en-IN');
+                        }
+                    }
+                }
+            };
+
+            const gaugeNeedlePointerPlugin = {
+                id: 'gaugeNeedlePointer',
+                afterDatasetsDraw(chart) {
+                    const {
+                        ctx,
+                        data
+                    } = chart;
+                    ctx.save();
+                    const xCenter = chart.getDatasetMeta(0).data[0].x;
+                    const yCenter = chart.getDatasetMeta(0).data[0].y;
+                    const outerRadius = chart.getDatasetMeta(0).data[0].outerRadius;
+                    const needleThickness = 3.5;
+
+                    let targetVal = data.datasets[0].needleValue || 0;
+                    // Safe logic mapping 0 to 2 range scale limits clean
+                    let maxScaleValue = 2;
+                    let normalizedVal = targetVal > maxScaleValue ? 1 : (targetVal / maxScaleValue);
+                    if (normalizedVal < 0) normalizedVal = 0;
+
+                    const angleRadius = Math.PI + (normalizedVal * Math.PI);
+                    ctx.translate(xCenter, yCenter);
+                    ctx.rotate(angleRadius);
+                    ctx.beginPath();
+                    ctx.moveTo(0, -needleThickness);
+                    ctx.lineTo(outerRadius - 12, 0);
+                    ctx.lineTo(0, needleThickness);
+                    ctx.fillStyle = '#0f172a';
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#0f172a';
+                    ctx.fill();
+                    ctx.restore();
+                }
+            };
+
+            function syncDynamicInventoryDashboard() {
+                fetch(coreMicroserviceServerUrl + 'kpi_card_matrics/' + queryParams)
+                    .then(res => res.json())
+                    .then(payload => {
+                        let dataArray = (payload && payload.items) ? payload.items : [];
+                        const DOM_IDS = ['valCard_0', 'valCard_1', 'valCard_2', 'valCard_3', 'valCard_4', 'valCard_5'];
+                        DOM_IDS.forEach((id, index) => {
+                            let targetDom = document.getElementById(id);
+                            if (targetDom) {
+                                let matchingData = dataArray[index] || {};
+                                let val = String(matchingData.card_value || matchingData.CARD_VALUE || '0').trim();
+                                if (!isNaN(val.replace(/,/g, '')) && val.length > 4) {
+                                    targetDom.innerText = Number(val.replace(/,/g, '')).toLocaleString('en-IN');
+                                } else {
+                                    targetDom.innerText = val;
+                                }
+                            }
+                        });
+                    }).catch(err => console.error(err));
+
+                fetch(coreMicroserviceServerUrl + 'grn_trend/' + queryParams)
+                    .then(res => res.json())
+                    .then(dataPayload => {
+                        let serverItems = dataPayload.items || [];
+                        let grnValues = Array(12).fill(0);
+                        staticMonths.forEach((month, index) => {
+                            let grnMatch = serverItems.find(r => String(r.month_name || r.MONTH_NAME || '').toUpperCase().includes(month));
+                            if (grnMatch) grnValues[index] = Number(grnMatch.grn_total || grnMatch.GRN_TOTAL || 0);
+                        });
+                        const ctxGRN = document.getElementById('grnOnlyBarChart').getContext('2d');
+                        if (grnOnlyBarChartRef) grnOnlyBarChartRef.destroy();
+                        grnOnlyBarChartRef = new Chart(ctxGRN, {
+                            type: 'bar',
+                            data: {
+                                labels: staticMonths,
+                                datasets: [{
+                                    data: grnValues,
+                                    backgroundColor: '#5c9399',
+                                    borderRadius: 4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: isolatedAxisLineConfig,
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    },
+                                    datalabels: {
+                                        align: 'top',
+                                        anchor: 'end',
+                                        color: '#475569',
+                                        font: {
+                                            family: 'Inter',
+                                            size: 9,
+                                            weight: '700'
+                                        },
+                                        formatter: v => v > 0 ? v.toLocaleString('en-IN') : '0'
+                                    }
+                                }
+                            }
+                        });
+                    }).catch(e => console.error(e));
+
+                fetch(coreMicroserviceServerUrl + 'issue_trend/' + queryParams)
+                    .then(res => res.json())
+                    .then(dataPayload => {
+                        let serverItems = dataPayload.items || [];
+                        let issueValues = Array(12).fill(0);
+                        staticMonths.forEach((month, index) => {
+                            let issueMatch = serverItems.find(r => String(r.month_name || r.MONTH_NAME || '').toUpperCase().includes(month));
+                            if (issueMatch) issueValues[index] = Number(issueMatch.total_value || issueMatch.TOTAL_VALUE || 0);
+                        });
+                        const ctxIssue = document.getElementById('issueOnlyBarChart').getContext('2d');
+                        if (issueOnlyBarChartRef) issueOnlyBarChartRef.destroy();
+                        issueOnlyBarChartRef = new Chart(ctxIssue, {
+                            type: 'bar',
+                            data: {
+                                labels: staticMonths,
+                                datasets: [{
+                                    data: issueValues,
+                                    backgroundColor: '#924d4d',
+                                    borderRadius: 4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: isolatedAxisLineConfig,
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    },
+                                    datalabels: {
+                                        align: 'top',
+                                        anchor: 'end',
+                                        color: '#475569',
+                                        font: {
+                                            family: 'Inter',
+                                            size: 9,
+                                            weight: '700'
+                                        },
+                                        formatter: v => v > 0 ? v.toLocaleString('en-IN') : '0'
+                                    }
+                                }
+                            }
+                        });
+                    }).catch(e => console.error(e));
+
+                fetch(coreMicroserviceServerUrl + 'stock_value_trend/' + queryParams)
+                    .then(res => res.json())
+                    .then(dataPayload => {
+                        let serverItems = dataPayload.items || [];
+                        let values = Array(12).fill(0);
+                        staticMonths.forEach((m, idx) => {
+                            let match = serverItems.find(r => String(r.month || r.MONTH || '').toUpperCase().includes(m));
+                            if (match) values[idx] = Number(match.average_inventory_value || match.AVERAGE_INVENTORY_VALUE || 0);
+                        });
+                        const ctx = document.getElementById('stockTrendValueLineChart').getContext('2d');
+                        if (stockTrendValueLineChartRef) stockTrendValueLineChartRef.destroy();
+                        stockTrendValueLineChartRef = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: staticMonths,
+                                datasets: [{
+                                    data: values,
+                                    borderColor: '#b57c4a',
+                                    backgroundColor: 'rgba(181,124,74,0.04)',
+                                    borderWidth: 2,
+                                    pointRadius: 3,
+                                    fill: true,
+                                    tension: 0.15
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: isolatedAxisLineConfig,
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    },
+                                    datalabels: {
+                                        align: 'top',
+                                        color: '#475569',
+                                        font: {
+                                            family: 'Inter',
+                                            size: 9,
+                                            weight: '700'
+                                        },
+                                        formatter: v => v > 0 ? v.toLocaleString('en-IN') : '0'
+                                    }
+                                }
+                            }
+                        });
+                    }).catch(e => console.error(e));
+
+                fetch(coreMicroserviceServerUrl + 'aging_stock_value/' + queryParams)
+                    .then(res => res.json())
+                    .then(dataPayload => {
+                        let serverItems = dataPayload.items || [];
+                        let labels = [];
+                        let values = [];
+                        serverItems.forEach(r => {
+                            let nameLabel = r.label || r.LABEL || r.ageing_days || '';
+                            let numValue = Number(r.value || r.VALUE || r.total_value || 0);
+                            if (nameLabel) {
+                                labels.push(nameLabel);
+                                values.push(numValue);
+                            }
+                        });
+                        const ctx = document.getElementById('ageingStockPieChart').getContext('2d');
+                        if (ageingStockPieChartRef) ageingStockPieChartRef.destroy();
+                        ageingStockPieChartRef = new Chart(ctx, {
+                            type: 'pie',
+                            data: {
+                                labels: labels.length ? labels : ['30 Days', '60 Days', '90 Days', '90+ Days'],
+                                datasets: [{
+                                    data: values.length ? values : [2000, 4000, 1500, 85000],
+                                    backgroundColor: ['#cae9c3', '#efd3d7', '#56a7c9', '#dee2ff']
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom',
+                                        labels: {
+                                            boxWidth: 10,
+                                            padding: 6,
+                                            font: {
+                                                family: 'Inter',
+                                                size: 10
+                                            }
+                                        }
+                                    },
+                                    datalabels: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        });
+                    }).catch(e => console.error(e));
+
+                fetch(coreMicroserviceServerUrl + 'reorder_details/' + queryParams)
+                    .then(res => res.json())
+                    .then(dataPayload => {
+                        let serverItems = dataPayload.items || [];
+                        let labels = [];
+                        let invData = [];
+                        let reorderData = [];
+                        let differenceData = [];
+
+                        serverItems.forEach(r => {
+                            labels.push(r.item_code || r.ITEM_CODE || 'Item');
+                            invData.push(Number(r.stock_value || r.STOCK_VALUE || 0));
+                            reorderData.push(Number(r.reorder_value || r.REORDER_VALUE || 0));
+                            differenceData.push(Number(r.difference || r.DIFFERENCE || 0));
+                        });
+
+                        const ctx = document.getElementById('reorderLevelComparisonBarChart').getContext('2d');
+                        if (reorderLevelComparisonBarChartRef) reorderLevelComparisonBarChartRef.destroy();
+                        reorderLevelComparisonBarChartRef = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: 'Inventory Details',
+                                    data: invData,
+                                    backgroundColor: '#e2944a',
+                                    borderRadius: 2
+                                }, {
+                                    label: 'Reorder Details',
+                                    data: reorderData,
+                                    backgroundColor: '#3e8469',
+                                    borderRadius: 2
+                                }, {
+                                    label: 'Difference Details',
+                                    data: differenceData,
+                                    backgroundColor: '#c56161',
+                                    borderRadius: 2
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: isolatedAxisLineConfig,
+                                plugins: {
+                                    datalabels: {
+                                        display: true,
+                                        align: 'top',
+                                        anchor: 'end',
+                                        color: '#475569',
+                                        font: {
+                                            family: 'Inter',
+                                            size: 8,
+                                            weight: '700'
+                                        },
+                                        formatter: v => v !== 0 ? v.toLocaleString('en-IN') : ''
+                                    },
+                                    legend: {
+                                        position: 'top',
+                                        labels: {
+                                            boxWidth: 9,
+                                            font: {
+                                                family: 'Inter',
+                                                size: 10
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }).catch(e => console.error(e));
+
+                // 🎯 Inject needle location metrics tracking into context structure safely
+                fetch(coreMicroserviceServerUrl + 'stock_to_sales_ratio/' + queryParams)
+                    .then(res => res.json())
+                    .then(dataPayload => {
+                        let serverItems = (dataPayload && dataPayload.items) ? dataPayload.items : [];
+                        let realGaugeVal = (serverItems.length > 0) ? Number(serverItems[0].value || serverItems[0].VALUE || 856.14) : 856.14;
+
+                        document.getElementById('gaugeLiveValueText').innerText = realGaugeVal.toLocaleString('en-IN', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+
+                        const canvasCtxGauge = document.getElementById('targetSpeedometerGauge').getContext('2d');
+                        if (targetSpeedometerGaugeInstance) {
+                            targetSpeedometerGaugeInstance.destroy();
+                        }
+
+                        targetSpeedometerGaugeInstance = new Chart(canvasCtxGauge, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Red', 'Orange', 'Green', 'Yellow'],
+                                datasets: [{
+                                    data: [0.5, 1, 1.5, 2],
+                                    backgroundColor: ['#FF5F5FFF', '#FFA05EFF', '#31D390FF', '#E2C524FF'],
+                                    borderWidth: 0
+                                }]
+                            },
+                            plugins: [gaugeNeedlePointerPlugin],
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                rotation: -90,
+                                circumference: 180,
+                                cutout: '50%',
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    },
+                                    datalabels: {
+                                        display: true,
+                                        color: '#555555',
+                                        font: {
+                                            size: 13,
+                                            weight: 'bold'
+                                        },
+                                        formatter: (value, ctx) => {
+                                            const scaleLabels = ['0.5', '1', '1.5', '2'];
+                                            if (ctx.dataIndex === 0) return '0.5';
+                                            if (ctx.dataIndex === 1) return '1';
+                                            if (ctx.dataIndex === 2) return '1.5';
+                                            if (ctx.dataIndex === 3) return '2';
+                                            return '';
+                                        },
+                                        align: 'end',
+                                        anchor: 'end'
+                                    }
+                                },
+                            }
+                        });
+                        targetSpeedometerGaugeInstance.data.datasets[0].needleValue = realGaugeVal;
+                        targetSpeedometerGaugeInstance.update();
+
+                    }).catch(err => console.error(err));
+            }
+
+            syncDynamicInventoryDashboard();
+            document.getElementById('btnResetDashboard').addEventListener('click', syncDynamicInventoryDashboard);
+
+            document.getElementById('btnCoreLogout').addEventListener('click', function() {
+                sessionStorage.clear();
+                localStorage.clear();
+                window.location.replace('login.html');
+            });
+        });
+    </script>
+</body>
+
+</html>

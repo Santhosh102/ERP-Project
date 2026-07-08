@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Dashboard</title>
+    <link rel="stylesheet" href="sales-style.css">
+    <!-- <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"> -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+</head>
+
+<body>
+
+    <header class="global-secure-header">
+        <div class="brand-logo-area" id="btnHeaderLogoRedirect">
+            <i class="ri-instance-line logo-icon"></i>
+            <span class="logo-tara">Tara<span class="logo-erp">ERP</span></span>
+
+            <!-- <span class="logo-erp">erp</span> -->
+        </div>
+        <div class="user-profile-badge">
+            <span id="lblDisplayUsername"><i class="ri-user-shared-line"></i> Loading...</span>
+            <button class="btn-universal-logout" id="btnCoreLogout">
+                <i class="ri-logout-box-r-line"></i>
+                <span>Logout</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <div class="dashboard-action-row">
+            <h2>Sales Dashboard</h2>
+            <button class="btn-reset-control" id="btnResetDashboard"><i class="ri-refresh-line"></i> Reset</button>
+        </div>
+
+        <main class="dashboard-core-viewport">
+
+            <div class="dashboard-section-block">
+                <div class="dashboard-metric-grid">
+                    <div class="metric-compact-card">
+                        <div class="card-title-banner">Sales Billed Invoice Value MTD</div>
+                        <div class="card-number-frame" id="valSalesBilledMTD">0.00</div>
+                        <div class="card-bottom-stripe green-bright"></div>
+                    </div>
+
+                    <div class="metric-compact-card">
+                        <div class="card-title-banner">Sales Billed Invoice Value YTD</div>
+                        <div class="card-number-frame" id="valSalesBilledYTD">0.00</div>
+                        <div class="card-bottom-stripe green-dark"></div>
+                    </div>
+
+                    <div class="metric-compact-card">
+                        <div class="card-title-banner">Sales Turnover Value MTD</div>
+                        <div class="card-number-frame" id="valSalesTurnoverMTD">0.00</div>
+                        <div class="card-bottom-stripe teal-medium"></div>
+                    </div>
+
+                    <div class="metric-compact-card">
+                        <div class="card-title-banner">Sales Turnover Value YTD</div>
+                        <div class="card-number-frame" id="valSalesTurnoverYTD">0.00</div>
+                        <div class="card-bottom-stripe teal-dark"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-flex-row">
+                <div class="dashboard-section-block chart-wrapper-container main-chart-width">
+                    <h3>Monthly CO Value Trend (MTD)</h3>
+                    <div class="chart-canvas-frame">
+                        <canvas id="salesTrendsLineChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="dashboard-section-block chart-wrapper-container main-chart-width">
+                    <h3>Monthly Billing Value Trend (MTD)</h3>
+                    <div class="chart-canvas-frame">
+                        <canvas id="billingTrendsLineChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="dashboard-section-block chart-wrapper-container side-widget-width target-card-ui">
+                    <div class="widget-header-row">
+                        <h3>Ageing Stock Value</h3>
+                    </div>
+                    <div class="chart-canvas-frame pie-layout-box">
+                        <canvas id="salesSharePieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bar-charts-flex-row">
+                <div class="dashboard-section-block chart-wrapper-container main-chart-width">
+                    <h3>Monthly Product Category Wise</h3>
+                    <div class="chart-canvas-frame">
+                        <canvas id="salesTrendsBarChartYTD"></canvas>
+                    </div>
+                </div>
+
+                <div class="dashboard-section-block chart-wrapper-container main-chart-width">
+                    <h3>Monthly Billing Customer Wise</h3>
+                    <div class="chart-canvas-frame">
+                        <canvas id="billingTrendsBarChartYTD"></canvas>
+                    </div>
+                </div>
+
+                <div class="dashboard-section-block chart-wrapper-container side-widget-width target-card-ui">
+                    <div class="widget-header-row">
+                        <h3>Stock to Sales Ratio</h3>
+                        <i class="ri-menu-line widget-menu-trigger"></i>
+                    </div>
+                    <div class="chart-canvas-frame gauge-layout-box">
+                        <canvas id="targetSpeedometerGauge"></canvas>
+                        <div class="gauge-center-value" id="gaugeLiveValueText">0.00</div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            Chart.register(ChartDataLabels);
+
+            document.getElementById('btnHeaderLogoRedirect').addEventListener('click', function() {
+                this.style.transform = "scale(0.95)";
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 150);
+            });
+
+            const activeOrgId = sessionStorage.getItem('org_id') || localStorage.getItem('stored_org_id');
+            const activeBranchId = sessionStorage.getItem('branch_id') || localStorage.getItem('stored_branch_id');
+            const activeUsername = sessionStorage.getItem('login_name') || localStorage.getItem('stored_login_name');
+
+            if (!activeOrgId || !activeBranchId || activeBranchId === 'undefined') {
+                sessionStorage.clear();
+                localStorage.clear();
+                window.location.replace('login.html');
+                return;
+            }
+
+            document.getElementById('lblDisplayUsername').innerText = String(activeUsername).toUpperCase();
+
+            window.history.pushState(null, null, window.location.href);
+            window.addEventListener('popstate', function() {
+                window.history.pushState(null, null, window.location.href);
+            });
+
+            const baseServerRootUrl = 'https://cloud.taraerp.com/ords/taralive/tara_sales_dash/';
+            const queryParams = '?p_orgid=' + encodeURIComponent(activeOrgId.trim()) +
+                '&p_branchid=' + encodeURIComponent(activeBranchId.trim()) +
+                '&_ncBust=' + new Date().getTime();
+
+            const activeDashboardPipeline = [{
+                endpointTemplate: 'kpi_billed_mtd',
+                targetDomId: 'valSalesBilledMTD'
+            }, {
+                endpointTemplate: 'kpi_billed_ytd',
+                targetDomId: 'valSalesBilledYTD'
+            }, {
+                endpointTemplate: 'kpi_turnover_mtd',
+                targetDomId: 'valSalesTurnoverMTD'
+            }, {
+                endpointTemplate: 'kpi_turnover_ytd',
+                targetDomId: 'valSalesTurnoverYTD'
+            }];
+
+            let liveChartInstanceReference = null;
+            let billingChartInstanceReference = null;
+            let salesBarChartYTDInstance = null;
+            let billingBarChartYTDInstance = null;
+
+            let salesSharePieChartInstance = null;
+            let targetSpeedometerGaugeInstance = null;
+
+            // Gauge Custom Needle Pointer Plugin Object
+            const gaugeNeedlePointerPlugin = {
+                id: 'gaugeNeedlePointer',
+                afterDatasetsDraw(chart) {
+                    const {
+                        ctx,
+                        data
+                    } = chart;
+                    ctx.save();
+                    const xCenter = chart.getDatasetMeta(0).data[0].x;
+                    const yCenter = chart.getDatasetMeta(0).data[0].y;
+                    const outerRadius = chart.getDatasetMeta(0).data[0].outerRadius;
+                    const innerRadius = chart.getDatasetMeta(0).data[0].innerRadius;
+                    const needleThickness = 4;
+
+                    let targetVal = data.datasets[0].needleValue || 0;
+                    // Scale coordinates mapping (0 to 2 max range) into 180 degrees angle space
+                    let normalizedVal = targetVal / 2;
+                    if (normalizedVal < 0) normalizedVal = 0;
+                    if (normalizedVal > 1) normalizedVal = 1;
+
+                    const angleRadius = Math.PI + (normalizedVal * Math.PI);
+
+                    ctx.translate(xCenter, yCenter);
+                    ctx.rotate(angleRadius);
+
+                    // Render needle pointer arrow geometry
+                    ctx.beginPath();
+                    ctx.moveTo(0, -needleThickness);
+                    ctx.lineTo(outerRadius - 10, 0);
+                    ctx.lineTo(0, needleThickness);
+                    ctx.fillStyle = '#1c2833';
+                    ctx.fill();
+
+                    // Render pivot base pin assembly ring
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 7, 0, Math.PI * 2);
+                    ctx.fillStyle = '#1c2833';
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = '#566573';
+                    ctx.fill();
+
+                    ctx.restore();
+                }
+            };
+
+            function createClassicChartConfig(chartType, labelsArray, dataValuesArray, themeColor, backgroundFadeFillColor) {
+                return {
+                    type: chartType,
+                    data: {
+                        labels: labelsArray,
+                        datasets: [{
+                            data: dataValuesArray,
+                            borderColor: themeColor,
+                            backgroundColor: backgroundFadeFillColor,
+                            borderWidth: chartType === 'bar' ? 0 : 2,
+                            barThickness: chartType === 'bar' ? 24 : undefined,
+                            pointStyle: 'rectRot',
+                            pointRadius: 6,
+                            pointBackgroundColor: themeColor,
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 1,
+                            tension: 0,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                top: 35,
+                                bottom: 20,
+                                left: 10,
+                                right: 10
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            datalabels: {
+                                align: 'top',
+                                anchor: 'end',
+                                offset: 6,
+                                color: '#333333',
+                                font: {
+                                    family: 'Arial, sans-serif',
+                                    size: 10,
+                                    weight: 'normal'
+                                },
+                                formatter: function(value) {
+                                    if (value === 0) return '0';
+                                    return value.toLocaleString('en-IN');
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: '#f1f1f1'
+                                },
+                                border: {
+                                    display: false
+                                },
+                                ticks: {
+                                    color: '#777777',
+                                    font: {
+                                        family: 'Arial, sans-serif',
+                                        size: 11
+                                    },
+                                    callback: function(value) {
+                                        return value.toLocaleString('en-US');
+                                    }
+                                }
+                            },
+                            x: {
+                                display: true,
+                                grid: {
+                                    display: false
+                                },
+                                border: {
+                                    color: '#999999',
+                                    width: 1
+                                },
+                                ticks: {
+                                    display: true,
+                                    color: '#777777',
+                                    font: {
+                                        family: 'Arial, sans-serif',
+                                        size: 10
+                                    },
+                                    autoSkip: false
+                                }
+                            }
+                        }
+                    }
+                };
+            }
+
+            function executeLiveSessionDashboardSync() {
+                activeDashboardPipeline.forEach(card => {
+                    fetch(baseServerRootUrl + card.endpointTemplate + '/' + queryParams)
+                        .then(res => res.json())
+                        .then(dataPayload => {
+                            if (dataPayload && dataPayload.items && dataPayload.items.length > 0) {
+                                document.getElementById(card.targetDomId).innerText = String(dataPayload.items[0].card_value || dataPayload.items[0].CARD_VALUE || '0.00').trim();
+                            }
+                        }).catch(err => {
+                            console.error(err);
+                        });
+                });
+
+                let staticTargetMonths = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR'];
+
+                // 📊 1. LINE CHART: CO VALUE TREND (MTD)
+                fetch(baseServerRootUrl + 'co_value_mtd/' + queryParams)
+                    .then(res => res.json())
+                    .then(dataPayload => {
+                        let serverItems = (dataPayload && dataPayload.items) ? dataPayload.items : [];
+                        let values = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+                        staticTargetMonths.forEach((month, index) => {
+                            let matchedRow = serverItems.find(row => String(row.label || row.LABEL || row.mon || row.MON || '').toUpperCase().trim().includes(month));
+                            if (matchedRow) {
+                                values[index] = Number(matchedRow.value || matchedRow.VALUE || 0);
+                            }
+                        });
+                        const canvasCtxElement = document.getElementById('salesTrendsLineChart').getContext('2d');
+                        if (liveChartInstanceReference) {
+                            liveChartInstanceReference.destroy();
+                        }
+                        liveChartInstanceReference = new Chart(canvasCtxElement, createClassicChartConfig('line', staticTargetMonths, values, '#4285f4', 'rgba(66, 133, 244, 0.12)'));
+                    }).catch(err => {
+                        console.error(err);
+                    });
+
+                // 📊 2. LINE CHART: BILLING VALUE TREND (MTD)
+                fetch(baseServerRootUrl + 'billing_value_mtd/' + queryParams)
+                    .then(res => res.json())
+                    .then(dataPayload => {
+                        let serverItems = (dataPayload && dataPayload.items) ? dataPayload.items : [];
+                        let values = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+                        staticTargetMonths.forEach((month, index) => {
+                            let matchedRow = serverItems.find(row => String(row.label || row.LABEL || row.mon || row.MON || '').toUpperCase().trim().includes(month));
+                            if (matchedRow) {
+                                values[index] = Number(matchedRow.value || matchedRow.VALUE || 0);
+                            }
+                        });
+                        const canvasCtxElementBilling = document.getElementById('billingTrendsLineChart').getContext('2d');
+                        if (billingChartInstanceReference) {
+                            billingChartInstanceReference.destroy();
+                        }
+                        billingChartInstanceReference = new Chart(canvasCtxElementBilling, createClassicChartConfig('line', staticTargetMonths, values, '#bc9781'));
+                    }).catch(err => {
+                        console.error(err);
+                    });
+
+                // 📊 3. DYNAMIC BAR CHART: PRODUCT CATEGORY WISE
+                fetch(baseServerRootUrl + 'product_category_mtd/' + queryParams)
+                    .then(res => res.json())
+                    .then(dataPayload => {
+                        let serverItems = (dataPayload && dataPayload.items) ? dataPayload.items : [];
+                        let dynamicLabels = [];
+                        let dynamicValues = [];
+                        serverItems.forEach(row => {
+                            dynamicLabels.push(String(row.label || row.LABEL || '').trim());
+                            dynamicValues.push(Number(row.value || row.VALUE || 0));
+                        });
+                        if (dynamicLabels.length === 0) {
+                            dynamicLabels = ['NO DATA'];
+                            dynamicValues = [0];
+                        }
+                        const canvasCtxBarSales = document.getElementById('salesTrendsBarChartYTD').getContext('2d');
+                        if (salesBarChartYTDInstance) {
+                            salesBarChartYTDInstance.destroy();
+                        }
+                        salesBarChartYTDInstance = new Chart(canvasCtxBarSales, createClassicChartConfig('bar', dynamicLabels, dynamicValues, '#4285f4', 'rgba(66, 133, 244, 0.75)'));
+                    }).catch(err => {
+                        console.error(err);
+                    });
+
+                // 📊 4. DYNAMIC BAR CHART: BILLING CUSTOMER WISE
+                fetch(baseServerRootUrl + 'billing_cust_wise_mtd/' + queryParams)
+                    .then(res => res.json())
+                    .then(dataPayload => {
+                        let serverItems = (dataPayload && dataPayload.items) ? dataPayload.items : [];
+                        let dynamicLabels = [];
+                        let dynamicValues = [];
+                        serverItems.forEach(row => {
+                            dynamicLabels.push(String(row.label || row.LABEL || '').trim());
+                            dynamicValues.push(Number(row.value || row.VALUE || 0));
+                        });
+                        if (dynamicLabels.length === 0) {
+                            dynamicLabels = ['NO DATA'];
+                            dynamicValues = [0];
+                        }
+                        const canvasCtxBarBilling = document.getElementById('billingTrendsBarChartYTD').getContext('2d');
+                        if (billingBarChartYTDInstance) {
+                            billingBarChartYTDInstance.destroy();
+                        }
+                        billingBarChartYTDInstance = new Chart(canvasCtxBarBilling, createClassicChartConfig('bar', dynamicLabels, dynamicValues, '#bc9781', '#bc9781'));
+                    }).catch(err => {
+                        console.error(err);
+                    });
+
+                // 📊 5. PIE CHART: AGEING STOCK VALUE (Matching design color exactly)
+                fetch(baseServerRootUrl + 'ageing_stock_value/' + queryParams)
+                    .then(res => res.json())
+                    .then(dataPayload => {
+                        let serverItems = (dataPayload && dataPayload.items) ? dataPayload.items : [];
+                        let labels = [];
+                        let values = [];
+                        serverItems.forEach(row => {
+                            labels.push(String(row.label || row.LABEL || '').trim());
+                            values.push(Number(row.value || row.VALUE || 0));
+                        });
+
+                        if (labels.length === 0) {
+                            labels = ['60 Days', '90 Days', '90+ Days'];
+                            values = [10397, 0, 81517610];
+                        }
+
+                        const canvasCtxPie = document.getElementById('salesSharePieChart').getContext('2d');
+                        if (salesSharePieChartInstance) {
+                            salesSharePieChartInstance.destroy();
+                        }
+
+                        salesSharePieChartInstance = new Chart(canvasCtxPie, {
+                            type: 'pie',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    data: values,
+                                    backgroundColor: ['#cbc0d3', '#efd3d7', '#81d4fa', '#dee2ff'],
+                                    borderWidth: 2,
+                                    borderColor: '#ffffff'
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        display: true,
+                                        position: 'right',
+                                        labels: {
+                                            boxWidth: 12,
+                                            font: {
+                                                size: 11
+                                            },
+                                            padding: 10
+                                        }
+                                    },
+                                    datalabels: {
+                                        display: true,
+                                        align: 'end',
+                                        anchor: 'center',
+                                        color: '#333333',
+                                        font: {
+                                            family: 'Arial',
+                                            size: 10,
+                                            align: 'center'
+                                        },
+                                        formatter: (value, ctx) => {
+                                            return value.toLocaleString('en-IN');
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }).catch(err => console.error(err));
+
+                // 📊 6. GAUGE CHART: STOCK TO SALES RATIO 
+                fetch(baseServerRootUrl + 'sales_to_stock_radio' + queryParams)
+                    .then(res => res.json())
+                    .then(dataPayload => {
+                        let serverItems = (dataPayload && dataPayload.items) ? dataPayload.items : [];
+                        let realGaugeVal = (serverItems.length > 0) ? Number(serverItems[0].value || serverItems[0].VALUE || 856.14) : 856.14;
+
+                        document.getElementById('gaugeLiveValueText').innerText = realGaugeVal.toLocaleString('en-IN', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+
+                        const canvasCtxGauge = document.getElementById('targetSpeedometerGauge').getContext('2d');
+                        if (targetSpeedometerGaugeInstance) {
+                            targetSpeedometerGaugeInstance.destroy();
+                        }
+
+                        targetSpeedometerGaugeInstance = new Chart(canvasCtxGauge, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Red', 'Orange', 'Green', 'Yellow'],
+                                datasets: [{
+                                    data: [0.5, 1, 1.5, 2],
+                                    backgroundColor: ['#FF5F5FFF', '#FFA05EFF', '#31D390FF', '#E2C524FF'],
+                                    borderWidth: 0
+                                }]
+                            },
+                            plugins: [gaugeNeedlePointerPlugin],
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                rotation: -90,
+                                circumference: 180,
+                                cutout: '50%',
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    },
+                                    datalabels: {
+                                        display: true,
+                                        color: '#555555',
+                                        font: {
+                                            size: 13,
+                                            weight: 'bold'
+                                        },
+                                        formatter: (value, ctx) => {
+                                            const scaleLabels = ['0.5', '1', '1.5', '2'];
+                                            if (ctx.dataIndex === 0) return '0.5';
+                                            if (ctx.dataIndex === 1) return '1';
+                                            if (ctx.dataIndex === 2) return '1.5';
+                                            if (ctx.dataIndex === 3) return '2';
+                                            return '';
+                                        },
+                                        // Position segment markers to clear outer edge bounds clean
+                                        align: 'end',
+                                        anchor: 'end'
+                                    }
+                                }
+                            }
+                        });
+                        // Inject needle location metrics tracking into context structure safely
+                        targetSpeedometerGaugeInstance.data.datasets[0].needleValue = realGaugeVal;
+                        targetSpeedometerGaugeInstance.update();
+
+                    }).catch(err => console.error(err));
+            }
+
+            executeLiveSessionDashboardSync();
+            document.getElementById('btnResetDashboard').addEventListener('click', executeLiveSessionDashboardSync);
+
+            document.getElementById('btnCoreLogout').addEventListener('click', function() {
+                sessionStorage.clear();
+                localStorage.clear();
+                window.location.replace('login.html');
+            });
+        });
+    </script>
+</body>
+
+</html>

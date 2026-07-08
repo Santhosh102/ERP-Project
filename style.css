@@ -1,0 +1,280 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.hub-container {
+    background: #c6deff;
+    padding: 50px 45px;
+    border-radius: 28px;
+    box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.15);
+    width: 100%;
+    max-width: 1200px;
+}
+
+.hub-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 35px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid rgba(15, 23, 42, 0.08);
+    width: 100%;
+}
+
+.user-profile-widget {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+}
+
+.profile-avatar-circle {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    background-color: #ffffff;
+}
+
+.profile-avatar-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-info-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.user-badge-code {
+    background-color: rgba(15, 23, 42, 0.08);
+    color: #0f172a;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+}
+
+.user-display-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+}
+
+.user-dept-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #475569;
+}
+
+.title-action-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    width: 100%;
+}
+
+.modules-section-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+}
+
+.tara-erp-btn {
+    background-color: #ea580c;
+    color: #ffffff;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(234, 88, 12, 0.35);
+    transition: all 0.2s ease;
+}
+
+.tara-erp-btn:hover {
+    background-color: #c2410c;
+    transform: translateY(-2px);
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 24px;
+    justify-content: center;
+}
+
+@media (max-width: 1200px) {
+    .card-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .card-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.square-card {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 35px 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.image-wrapper {
+    width: 65px;
+    height: 65px;
+    border-radius: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 18px;
+    box-shadow: 0 6px 12px rgba(15, 23, 42, 0.04);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.image-wrapper i {
+    font-size: 32px;
+    color: #ffffff;
+}
+
+.square-card span {
+    font-size: 15px;
+    font-weight: 600;
+    color: #334155;
+    transition: color 0.3s ease;
+}
+
+.sales-bg {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+}
+
+.purchase-bg {
+    background: linear-gradient(135deg, #0d9488, #14b8a6);
+}
+
+.inventory-bg {
+    background: linear-gradient(135deg, #d97706, #f59e0b);
+}
+
+.qc-bg {
+    background: linear-gradient(135deg, #059669, #10b981);
+}
+
+.subcontract-bg {
+    background: linear-gradient(135deg, #db2777, #ec4899);
+}
+
+.production-bg {
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+}
+
+.sales-card {
+    border: 1px solid #6366f1;
+}
+
+.purchase-card {
+    border: 1px solid #14b8a6;
+}
+
+.inventory-card {
+    border: 1px solid #f59e0b;
+}
+
+.qc-card {
+    border: 1px solid #10b981;
+}
+
+.subcontract-card {
+    border: 1px solid #ec4899;
+}
+
+.production-card {
+    border: 1px solid #8b5cf6;
+}
+
+.square-card:hover {
+    transform: translateY(-12px) scale(1.04);
+}
+
+.square-card:hover .image-wrapper {
+    transform: scale(1.15) rotate(5deg);
+}
+
+.sales-card:hover {
+    box-shadow: 0 15px 30px -10px rgba(99, 102, 241, 0.35);
+}
+
+.sales-card:hover span {
+    color: #6366f1;
+}
+
+.purchase-card:hover {
+    box-shadow: 0 15px 30px -10px rgba(20, 184, 166, 0.35);
+}
+
+.purchase-card:hover span {
+    color: #14b8a6;
+}
+
+.inventory-card:hover {
+    box-shadow: 0 15px 30px -10px rgba(245, 158, 11, 0.35);
+}
+
+.inventory-card:hover span {
+    color: #f59e0b;
+}
+
+.qc-card:hover {
+    box-shadow: 0 15px 30px -10px rgba(16, 185, 129, 0.35);
+}
+
+.qc-card:hover span {
+    color: #10b981;
+}
+
+.subcontract-card:hover {
+    box-shadow: 0 15px 30px -10px rgba(236, 72, 153, 0.35);
+}
+
+.subcontract-card:hover span {
+    color: #ec4899;
+}
+
+.production-card:hover {
+    box-shadow: 0 15px 30px -10px rgba(139, 92, 246, 0.35);
+}
+
+.production-card:hover span {
+    color: #8b5cf6;
+}
